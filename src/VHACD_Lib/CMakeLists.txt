@@ -3,31 +3,29 @@ include(${CMAKE_COMMON_INC})
 
 set(CMAKE_CXX_STANDARD 11)
 
+set(LIB_TYPE "STATIC" CACHE STRING "STATIC, SHARED or MODULE?")
+message("[VHACD] \t LIB_TYPE " ${LIB_TYPE})
+add_library(vhacd ${LIB_TYPE} ${PROJECT_CPP_FILES} ${PROJECT_C_FILES} ${PROJECT_INC_FILES} ${PROJECT_INL_FILES} ${PROJECT_CL_FILES})
+
 if (NOT NO_OPENCL)
 	#include(FindOpenCL OPTIONAL)
 	find_package(OpenCL)
 endif()
+
 if (NOT NO_OPENMP)
 	#include(FindOpenMP OPTIONAL)
 	find_package(OpenMP)
 endif()
 
 if(OPENMP_FOUND)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
+    target_link_libraries(vhacd PRIVATE OpenMP::OpenMP_CXX)
 endif()
 
 if (OpenCL_FOUND)
-    target_include_directories(vhacd PRIVATE "${OpenCL_INCLUDE_DIR}")
-    target_link_libraries(vhacd PRIVATE "${OpenCL_LIBRARY}")
+    target_link_libraries(vhacd PRIVATE OpenCL::OpenCL)
     target_compile_definitions(vhacd PRIVATE -DOPENCL_FOUND=1 )
     target_compile_definitions(vhacd PRIVATE -DOPENCL_CL_FILES="${PROJECT_CL_FILES}" )
 endif()
-
-set(LIB_TYPE "STATIC" CACHE STRING "STATIC, SHARED or MODULE?")
-message("[VHACD] \t LIB_TYPE " ${LIB_TYPE})
-add_library(vhacd ${LIB_TYPE} ${PROJECT_CPP_FILES} ${PROJECT_C_FILES} ${PROJECT_INC_FILES} ${PROJECT_INL_FILES} ${PROJECT_CL_FILES})
 
 target_include_directories(vhacd PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/public/>)
